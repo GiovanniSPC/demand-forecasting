@@ -39,7 +39,7 @@ class Evaluator:
         """
         df = df.copy()
         df['date'] = pd.to_datetime(df['date'], utc=True)
-        df['year_month'] = df['date'].dt.to_period('M')
+        df['year_month'] = df['date'].dt.tz_localize(None).dt.to_period('M')
 
         monthly = (
             df.groupby(['year_month', 'item_number'])[value_col]

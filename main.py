@@ -2,9 +2,8 @@
 Main entry point — Full pipeline:
     1. Clean raw data
     2. Validate
-    3. Feature engineering
-    4. Run experiments (Naive models at D, W, M frequencies)
-    5. Compare results (always evaluated monthly)
+    3. Run experiments (Naive models at D, W, M frequencies)
+    4. Compare results (always evaluated monthly)
 """
 
 import sys
@@ -15,7 +14,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.data.data_cleaner import DataCleaner
 from src.data.data_validator import DataValidator
-from src.data.feature_engineer import FeatureEngineer
 from src.models.naive_model import NaiveModel
 from src.experiment.experiment_runner import ExperimentRunner
 
@@ -24,7 +22,6 @@ from src.experiment.experiment_runner import ExperimentRunner
 # CONFIG
 # ─────────────────────────────────────────────
 RAW_FILE = "./datasets/Transaction_Details.xlsx"
-HOLIDAYS_FILE = "./datasets/holidays_2018_2025.csv"
 CUTOFF_DATE = "2025-01-01"
 RESULTS_DIR = "results"
 
@@ -48,16 +45,9 @@ def main():
         print("❌ Validation failed. Stopping pipeline.")
         return
 
-    # ── Step 3: Feature engineering ──
+    # ── Step 3: Run experiments ──
     print("\n" + "=" * 60)
-    print("  STEP 3: FEATURE ENGINEERING")
-    print("=" * 60)
-    fe = FeatureEngineer(df_clean, holidays_path=HOLIDAYS_FILE)
-    df_enriched = fe.transform()
-
-    # ── Step 4: Run experiments ──
-    print("\n" + "=" * 60)
-    print("  STEP 4: EXPERIMENTS")
+    print("  STEP 3: EXPERIMENTS")
     print("=" * 60)
 
     experiments = [
@@ -76,7 +66,7 @@ def main():
     ]
 
     runner = ExperimentRunner(
-        df=df_enriched,
+        df=df_clean,
         cutoff_date=CUTOFF_DATE,
         experiments=experiments,
         results_dir=RESULTS_DIR,
