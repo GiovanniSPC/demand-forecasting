@@ -98,6 +98,9 @@ class ExperimentRunner:
         overall = evaluator.evaluate(actuals, predictions, level='overall')
         evaluator.summary()
 
+        # Export actual vs predicted comparison CSV
+        self._export_comparison(test, predictions, model.get_name(), freq)
+
         # Build result entry
         result = {
             'model': model.get_name(),
@@ -146,6 +149,34 @@ class ExperimentRunner:
         self._save_results(results_df)
 
         return results_df
+
+    def _export_comparison(self, test: pd.DataFrame, predictions: pd.DataFrame, model_name: str, freq: str):
+        """
+        Export actual vs predicted comparison to CSV.
+
+        Output columns: date, item_number, item_description, category, quantity, prediction
+        Saved in: results/{freq}/comparison_{model_name}.csv
+        """
+        # Merge actuals with predictions
+        comparison = test[['date', 'item_number', 'item_description', 'category', 'quantity']].copy()
+        comparison = comparison.merge(
+            predictions[['date', 'item_number', 'quantity_pred']],
+            on=['date', 'item_number'],
+            how='left'
+        )
+        comparison = comparison.rename(columns={'quantity_pred': 'prediction'})
+        comparison['prediction'] = comparison['prediction'].fillna(0).astype(int)
+
+        # Sort
+        comparison = comparison.sort_values(['date', 'item_number']).reset_index(drop=True)
+
+        # Save in freq subdirectory
+        safe_name = model_name.replace('(', '').replace(')', '').replace(' ', '_').lower()
+        freq_dir = os.path.join(self.results_dir, freq)
+        os.makedirs(freq_dir, exist_ok=True)
+        filepath = os.path.join(freq_dir, f"prediction_{safe_name}.csv")
+        comparison.to_csv(filepath, index=False)
+        print(f"  📁 Prediction saved: {filepath}")
 
     def _save_results(self, results_df: pd.DataFrame):
         """Append results to the experiment log CSV."""
